@@ -48,7 +48,7 @@ class logger {
         this._logger = new winston.Logger( {
             transports: [
                 new winston.transports.DailyRotateFile( {
-                    filename: __dirname + '/../logs/control_',
+                    filename: __dirname + '/../../logs/control_',
                     datePattern: 'yyyy-MM-dd.log',
                     level: 'debug',
                     handleExceptions: true,
