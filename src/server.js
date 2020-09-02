@@ -41,7 +41,7 @@ app.use(function(err, req, res, next) { // handle errors
         logger.error('404 error : ' + req.originalUrl + ' (' + req.method + ')');
         res.status(404).json({message: "Not found"});
     } else {
-        logger.error('Internal error : ' + err);
+        logger.error('Internal error - ' + req.originalUrl + ' (' + req.method + ') err : ' + err);
         res.status(500).json({message: "Server error"});
     }
 });

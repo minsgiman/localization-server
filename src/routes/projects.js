@@ -6,7 +6,7 @@ router.get('/', projectsController.getProjects);
 router.post('/', projectsController.create);
 router.put('/:projectId', projectsController.updateById);
 router.delete('/:projectId', projectsController.deleteById);
-router.get('/:projectId/logs', projectsController.getLogs);
-router.delete('/:projectId/translates', projectsController.deleteTranslates);
+router.get('/:projectId/logs', projectsController.getLogsById);
+router.delete('/:projectId/translates', projectsController.deleteTranslatesById);
 
 module.exports = router;
