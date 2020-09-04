@@ -13,6 +13,11 @@ const translateSchema = new dbSchema({
         trim: true,
         required: true,
     },
+    tag: {
+        type: String, //"Localizable"
+        trim: true,
+        required: false,
+    },
     ko: {
         type: String, //"토스트캠 Biz 바로가기"
         trim: true,

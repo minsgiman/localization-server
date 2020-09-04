@@ -1,9 +1,11 @@
 const winston = require('winston');
 const _logWrite = Symbol('logWrite');
+const util = require('./util');
 
 class logger {
     constructor () {
         this._logger = null;
+        this._projectLogMap = {};
     }
 
     loggerInit () {
@@ -70,6 +72,47 @@ class logger {
             ],
             exitOnError: false
         });
+    }
+
+    getProjectLog (projectId) {
+        return this._projectLogMap[projectId] ? this._projectLogMap[projectId] : [];
+    }
+
+    recordProjectLog (logData) {
+        const date = new Date();
+        const ipAddr = '<span style=\"color:darkred\">' + util.getClientIp(logData.request) + '</span>';
+        let log = '', updateValue = '';
+
+        if (!this._projectLogMap[logData.projectId]) {
+            this._projectLogMap[logData.projectId] = [];
+        }
+
+        if (logData.updateValue && logData.updateValue.length > 20) {
+            updateValue = '<span style=\"color:blue\">' + (logData.updateValue.substr(0, 20) + '...') + '</span>';
+        } else {
+            updateValue = '<span style=\"color:blue\">' + logData.updateValue + '</span>';
+        }
+
+        log = '[' + date.toLocaleString() + '] ';
+        log += (ipAddr + '에서(' + logData.projectId + ' 프로젝트) ');
+
+        if (logData.type === 'upsertlist') {
+            log += (logData.updateLength > 1 ? (updateValue + ' 외 ' + logData.updateLength + '개를 업로드하였습니다.') : (updateValue + ' 를 업로드하였습니다.'));
+        } else if (logData.type === 'delete') {
+            log += ('\"{key: ' + logData.deleteKey + ', strid: ' + logData.deleteStrId + ', base: ' + logData.deleteBase + '}\" 를 삭제하였습니다.');
+        } else if (logData.type === 'update') {
+            log += (updateValue + ' 를 업데이트하였습니다.');
+        } else if (logData.type === 'create') {
+            log += (updateValue + ' 를 생성하였습니다.');
+        } else if (logData.type === 'deleteall') {
+            log += ('번역어 전체를 삭제하였습니다.');
+        }
+
+        this._projectLogMap[logData.projectId].push(log);
+        if (this._projectLogMap[logData.projectId].length > 30) {
+            this._projectLogMap[logData.projectId].shift();
+        }
+        this.debug(log);
     }
 
     debug (msg) {

@@ -41,7 +41,7 @@ module.exports = {
             uuid: util.makeUUID(),
             baseLang: constants.BASE_LANGUAGE,
             updateDate: 0
-        }, function (err, result) {
+        }, function (err, project) {
             if (err) {
                 next(err);
             } else {
@@ -52,13 +52,12 @@ module.exports = {
     updateById: function(req, res, next) {
         looger.debug('projects updateById');
 
-        if (!req.body || !req.body.name || !req.body.languages) {
+        if (!req.body || !req.body.languages) {
             res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
             return;
         }
 
         projectsModel.findByIdAndUpdate(req.params.projectId,{
-            name: req.body.name,
             languages: req.body.languages
         }, function(err, project){
             if (err) {
@@ -73,19 +72,18 @@ module.exports = {
     deleteById: function(req, res, next) {
         looger.debug('projects deleteById');
 
-        if (!req.body || !req.body.name || !req.body.uuid) {
+        if (!req.body || !req.body.uuid) {
             res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
             return;
         }
 
         const regPattern = `^${req.body.uuid}(.)+`;
         const regEx = new RegExp(regPattern);
-
         translatesModel.deleteMany({ _id: regEx }, function (err) {
             if (err) {
                 next(err);
             } else {
-                projectsModel.findByIdAndRemove(req.body.name, function (err, project) {
+                projectsModel.findByIdAndRemove(req.params.projectId, function (err, project) {
                     if (err) {
                         next(err);
                     } else {
@@ -97,10 +95,44 @@ module.exports = {
     },
     getLogsById: function(req, res, next) {
         looger.debug('projects getLogs');
-        res.json({status:'success', message: 'ok', data: {test: 'good'}});
+
+        if (req.params.projectId) {
+            res.send({'code' : 'ok', 'result': logger.getProjectLog(req.params.projectId)});
+        } else {
+            res.send({'code' : 'nok', 'error' : 'No projectId'});
+        }
     },
     deleteTranslatesById: function(req, res, next) {
         looger.debug('projects deleteTranslates');
-        res.json({status:'success', message: 'ok', data: {test: 'good'}});
+
+        if (!req.body || !req.body.uuid) {
+            res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
+            return;
+        }
+
+        const regPattern = `^${req.body.uuid}(.)+`;
+        const regEx = new RegExp(regPattern);
+        translatesModel.deleteMany({ _id: regEx }, function (err) {
+            if (err) {
+                next(err);
+            } else {
+                logger.recordProjectLog({
+                    type : 'deleteall',
+                    request : req,
+                    projectId : req.params.projectId
+                });
+                projectsModel.findByIdAndUpdate(req.params.projectId,{
+                    updateDate: new Date().getTime()
+                }, function(err, project){
+                    if (err) {
+                        next(err);
+                    } else {
+                        res.send({
+                            code: 'ok'
+                        });
+                    }
+                });
+            }
+        });
     }
 }

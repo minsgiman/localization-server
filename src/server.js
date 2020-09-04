@@ -39,10 +39,10 @@ app.use(function(req, res, next) { // handle 404 error
 app.use(function(err, req, res, next) { // handle errors
     if (err.status === 404) {
         logger.error('404 error : ' + req.originalUrl + ' (' + req.method + ')');
-        res.status(404).json({message: "Not found"});
+        res.status(404).json({code: 'nok', message: 'Not found'});
     } else {
         logger.error('Internal error - ' + req.originalUrl + ' (' + req.method + ') err : ' + err);
-        res.status(500).json({message: "Server error"});
+        res.status(500).json({code: 'nok', message: 'Server error'});
     }
 });
 
