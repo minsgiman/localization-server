@@ -151,7 +151,7 @@ module.exports = {
         }
 
         if (req.query.projectUUID) {
-            const regPattern = `^${req.body.uuid}(.)+`;
+            const regPattern = `^${req.query.projectUUID}(.)+`;
             const regEx = new RegExp(regPattern);
 
             translatesModel.find({ uid: regEx }, function(err, translates){
