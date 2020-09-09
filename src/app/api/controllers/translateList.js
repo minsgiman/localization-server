@@ -163,10 +163,11 @@ module.exports = {
             });
         }
     },
+
     createByMap: function(req, res, next) {
         looger.debug('translateList createByMap');
 
-        if (!req.body || !req.body.projectName || !req.body.locale || !req.body.itemMap) { //req.body.tag
+        if (!req.body || !req.body.projectName || !req.body.locale || !req.body.itemMap) {
             res.send({'code' : 'nok', 'error' : 'wrong parameter'});
             return;
         }
@@ -226,6 +227,7 @@ module.exports = {
             });
         });
     },
+
     deleteByKeys: function(req, res, next) {
         looger.debug('translateList deleteByKeys');
 

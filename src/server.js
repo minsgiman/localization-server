@@ -29,7 +29,6 @@ app.use('/projects', projects);
 app.use('/translateList', translateList);
 app.use('/translates', translates);
 //app.use('/users', users);
-//app.use('/movies', validateUser, movies);
 
 app.use(function(req, res, next) { // handle 404 error
     let err = new Error('Not Found');

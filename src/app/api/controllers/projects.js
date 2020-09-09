@@ -26,6 +26,7 @@ module.exports = {
             }
         });
     },
+
     create: function(req, res, next) {
         looger.debug('projects create');
 
@@ -49,6 +50,7 @@ module.exports = {
             }
         });
     },
+
     updateById: function(req, res, next) {
         looger.debug('projects updateById');
 
@@ -69,6 +71,7 @@ module.exports = {
             }
         });
     },
+
     deleteById: function(req, res, next) {
         looger.debug('projects deleteById');
 
@@ -93,6 +96,7 @@ module.exports = {
             }
         });
     },
+
     getLogsById: function(req, res, next) {
         looger.debug('projects getLogs');
 
@@ -102,6 +106,7 @@ module.exports = {
             res.send({'code' : 'nok', 'error' : 'No projectId'});
         }
     },
+
     deleteTranslatesById: function(req, res, next) {
         looger.debug('projects deleteTranslates');
 
