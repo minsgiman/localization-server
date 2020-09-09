@@ -70,127 +70,100 @@ function buildBulkUpsertOperations(paramObj) {
 }
 
 module.exports = {
-    getByProject: function(req, res, next) {
+    getByProject: async(req, res, next) => {
         logger.debug('translateList getByProject');
 
         if (!req.query || !(req.query.projectUUID || req.query.projectName)) {
-            res.send({'code' : 'nok'});
-            return;
+            return res.send({ 'code' : 'nok' });
         }
 
         if (req.query.projectName) {
-            projectsModel.find({uid: req.query.projectName}, function(err, project){
-                if (err) {
-                    next(err);
-                    return;
-                }
-
-                const updateDateParam = req.query.updateDate ? parseInt(req.query.updateDate, 10) : -1;
-                if (updateDateParam >= project.updateDate) {
-                    res.send({'code' : 'nok', 'msg' : 'notting updated'});
-                    return;
-                }
-
+            try {
+                const project = await projectsModel.find({uid: req.query.projectName}).exec();
                 const regPattern = `^${project.uuid}(.)+`;
                 const regEx = new RegExp(regPattern);
-                translatesModel.find({ uid: regEx }, function(err, translates){
-                    if (err) {
-                        next(err);
-                        return;
-                    }
+                const updateDateParam = req.query.updateDate ? parseInt(req.query.updateDate, 10) : -1;
 
-                    let map, tag, tags = {'': true}, languages, translate, dataJSON = {updateDate: project.updateDate, tags: []};
+                if (updateDateParam >= project.updateDate) {
+                    return res.send({'code' : 'nok', 'msg' : 'notting updated'});
+                }
 
-                    /*** find all tags ***/
-                    for (translate of translates) {
-                        if (translate.tag) {
-                            tags[translate.tag] = true;
-                        }
+                const translates = await translatesModel.find({ uid: regEx }).exec();
+                let map, tag, tags = {'': true}, languages, translate,
+                    dataJSON = {code: 'ok', updateDate: project.updateDate, tags: []};
+
+                /*** find all tags ***/
+                for (translate of translates) {
+                    if (translate.tag) {
+                        tags[translate.tag] = true;
                     }
-                    /*** make tags lang Map ***/
-                    if (project.languages) {
-                        languages = project.languages.split(',');
-                    } else {
-                        languages = [];
-                    }
-                    languages.forEach((language) => {
-                        for (tag in tags) {
-                            dataJSON.tags.push({
-                                tag : tag,
-                                locale : language,
-                                itemMap : {},
-                                keys : [],
-                                base : language === project.baseLang
-                            });
-                        }
-                    });
-                    /*** Fill tags lang Map ***/
-                    translates.sort(function (a, b) {
-                        let aLabel, bLabel;
-                        aLabel = (a.strid) ? a.strid.toLowerCase() : '';
-                        bLabel = (b.strid) ? b.strid.toLowerCase() : '';
-                        return aLabel < bLabel ? -1 : aLabel > bLabel ? 1 : 0;
-                    });
-                    for (translate of translates) {
-                        languages.forEach((language) => {
-                            map = findTagMap(dataJSON.tags, language, translate.tag);
-                            if (translate[language]) {
-                                map.itemMap[translate.strid] = translate[language];
-                                map.keys.push(translate.strid);
-                            } else {
-                                map.itemMap[translate.strid] = translate[project.baseLang];
-                                map.keys.push(translate.strid);
-                            }
+                }
+                /*** make tags lang Map ***/
+                languages = project.languages ? project.languages.split(',') : [];
+                languages.forEach((language) => {
+                    for (tag in tags) {
+                        dataJSON.tags.push({
+                            tag : tag,
+                            locale : language,
+                            itemMap : {},
+                            keys : [],
+                            base : language === project.baseLang
                         });
                     }
-                    dataJSON.code = 'ok';
-                    res.send(dataJSON);
                 });
-            });
-            return;
+                /*** Fill tags lang Map ***/
+                translates.sort(function (a, b) {
+                    let aLabel, bLabel;
+                    aLabel = (a.strid) ? a.strid.toLowerCase() : '';
+                    bLabel = (b.strid) ? b.strid.toLowerCase() : '';
+                    return aLabel < bLabel ? -1 : aLabel > bLabel ? 1 : 0;
+                });
+                for (translate of translates) {
+                    languages.forEach((language) => {
+                        map = findTagMap(dataJSON.tags, language, translate.tag);
+                        map.itemMap[translate.strid] = translate[language] ? translate[language] : translate[project.baseLang];
+                        map.keys.push(translate.strid);
+                    });
+                }
+                return res.send(dataJSON);
+            } catch (err) {
+                return next(err);
+            }
         }
 
         if (req.query.projectUUID) {
-            const regPattern = `^${req.query.projectUUID}(.)+`;
-            const regEx = new RegExp(regPattern);
+            try {
+                const regPattern = `^${req.query.projectUUID}(.)+`;
+                const regEx = new RegExp(regPattern);
+                const translates = await translatesModel.find({ uid: regEx }).exec();
 
-            translatesModel.find({ uid: regEx }, function(err, translates){
-                if (err){
-                    next(err);
-                } else{
-                    res.send({'code' : 'ok', 'result' : translates});
-                }
-            });
+                return res.send({'code' : 'ok', 'result' : translates});
+            } catch (err) {
+                return next(err);
+            }
         }
     },
 
-    createByMap: function(req, res, next) {
+    createByMap: async(req, res, next) => {
         logger.debug('translateList createByMap');
 
         if (!req.body || !req.body.projectName || !req.body.locale || !req.body.itemMap) {
-            res.send({'code' : 'nok', 'error' : 'wrong parameter'});
-            return;
+            return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
         }
 
-        const pProjectName = req.body.projectName,
-            pLocale = req.body.locale,
-            pItemMap = req.body.itemMap,
-            pTag = req.body.tag;
+        const pProjectName = req.body.projectName, pLocale = req.body.locale,
+            pItemMap = req.body.itemMap, pTag = req.body.tag;
 
-        projectsModel.find({uid: pProjectName}, function (err, project) {
-            if (err) {
-                next(err);
-                return;
-            }
-
+        try {
+            const project = await projectsModel.find({uid: pProjectName}).exec();
             if (!project || !project.uuid) {
-                res.send({'code' : 'nok', 'error' : 'no project exist'});
-                return;
+                return res.send({'code' : 'nok', 'error' : 'no project exist'});
             }
 
             let itemKey, upsertStrings = [], items = (typeof pItemMap === 'string' ? JSON.parse(pItemMap) : pItemMap);
             const regPattern = `^${project.uuid}(.)+`;
             const regEx = new RegExp(regPattern);
+            const curTranslates = await translatesModel.find({ uid: regEx }).exec();
 
             for (itemKey in items) {
                 upsertStrings.push({
@@ -198,53 +171,28 @@ module.exports = {
                     data : items[itemKey]
                 });
             }
-            translatesModel.find({ uid: regEx }, function(err, curTranslates){
-                if (err){
-                    next(err);
-                    return;
-                }
-
-                translatesModel.bulkWrite(buildBulkUpsertOperations({
-                    curTranslates, upsertStrings, project, pLocale, pTag
-                }), function (err, result) {
-                    if (err) {
-                        next(err);
-                        return;
-                    }
-
-                    projectsModel.findOneAndUpdate({uid: project.uid}, {
-                        updateDate: new Date().getTime()
-                    }, function(err, project){
-                        if (err) {
-                            next(err);
-                            return;
-                        }
-                        res.send({
-                            code: 'ok'
-                        });
-                    });
-                });
-            });
-        });
+            await translatesModel.bulkWrite(buildBulkUpsertOperations({
+                curTranslates, upsertStrings, project, pLocale, pTag
+            })).exec();
+            await projectsModel.findOneAndUpdate({ uid: project.uid }, { updateDate: new Date().getTime() }).exec();
+            return res.send({ code: 'ok' });
+        } catch (err) {
+            return next(err);
+        }
     },
 
-    deleteByKeys: function(req, res, next) {
+    deleteByKeys: async(req, res, next) => {
         logger.debug('translateList deleteByKeys');
 
         if (!req.body || !req.body.projectName || !req.body.keys) {
-            res.send({'code' : 'nok', 'error' : 'wrong parameter'});
-            return;
+            return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
         }
-
         if (typeof req.body.keys === 'string') {
             req.body.keys = JSON.parse(req.body.keys);
         }
-        projectsModel.find({uid: req.body.projectName}, function (err, project) {
-            if (err) {
-                next(err);
-                return;
-            }
 
+        try {
+            const project = await projectsModel.find({uid: req.body.projectName}).exec();
             const bulkOperations = [];
             const regPattern = `^${project.uuid}(.)+`;
             const regEx = new RegExp(regPattern);
@@ -256,25 +204,11 @@ module.exports = {
                     }
                 });
             });
-
-            translatesModel.bulkWrite(bulkOperations, function (err, result) {
-                if (err) {
-                    next(err);
-                    return;
-                }
-
-                projectsModel.findOneAndUpdate({uid: project.uid}, {
-                    updateDate: new Date().getTime()
-                }, function(err, project){
-                    if (err) {
-                        next(err);
-                        return;
-                    }
-                    res.send({
-                        code: 'ok'
-                    });
-                });
-            });
-        });
+            await translatesModel.bulkWrite(bulkOperations).exec();
+            await projectsModel.findOneAndUpdate({ uid: project.uid }, { updateDate: new Date().getTime() });
+            return res.send({ code: 'ok' });
+        } catch (err) {
+            return next(err);
+        }
     }
 };
