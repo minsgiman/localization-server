@@ -1,6 +1,6 @@
 const translatesModel = require('../models/translates');
 const projectsModel = require('../models/projects');
-const looger = require('../../../service/logger');
+const logger = require('../../../service/logger');
 const util = require('../../../service/util');
 
 function findTagMap (map, lang, tag) {
@@ -38,13 +38,13 @@ function buildBulkUpsertOperations(paramObj) {
 
             bulkOperations.push({
                 updateOne: {
-                    filter: { _id: translateMap[string.stringid]._id },
+                    filter: { uid: translateMap[string.stringid].uid },
                     update: updateObj
                 }
             });
         } else {
             insertObj = {
-                _id: project.uuid + '_' + curKeyNumber,
+                uid: project.uuid + '_' + curKeyNumber,
                 base: (pLocale === project.baseLang) ? string.data : '',
                 strid: string.stringid,
                 tag: pTag ? pTag : '',
@@ -71,7 +71,7 @@ function buildBulkUpsertOperations(paramObj) {
 
 module.exports = {
     getByProject: function(req, res, next) {
-        looger.debug('translateList getByProject');
+        logger.debug('translateList getByProject');
 
         if (!req.query || !(req.query.projectUUID || req.query.projectName)) {
             res.send({'code' : 'nok'});
@@ -79,7 +79,7 @@ module.exports = {
         }
 
         if (req.query.projectName) {
-            projectsModel.findById(req.query.projectName, function(err, project){
+            projectsModel.find({uid: req.query.projectName}, function(err, project){
                 if (err) {
                     next(err);
                     return;
@@ -93,7 +93,7 @@ module.exports = {
 
                 const regPattern = `^${project.uuid}(.)+`;
                 const regEx = new RegExp(regPattern);
-                translatesModel.find({ _id: regEx }, function(err, translates){
+                translatesModel.find({ uid: regEx }, function(err, translates){
                     if (err) {
                         next(err);
                         return;
@@ -154,7 +154,7 @@ module.exports = {
             const regPattern = `^${req.body.uuid}(.)+`;
             const regEx = new RegExp(regPattern);
 
-            translatesModel.find({ _id: regEx }, function(err, translates){
+            translatesModel.find({ uid: regEx }, function(err, translates){
                 if (err){
                     next(err);
                 } else{
@@ -165,7 +165,7 @@ module.exports = {
     },
 
     createByMap: function(req, res, next) {
-        looger.debug('translateList createByMap');
+        logger.debug('translateList createByMap');
 
         if (!req.body || !req.body.projectName || !req.body.locale || !req.body.itemMap) {
             res.send({'code' : 'nok', 'error' : 'wrong parameter'});
@@ -177,7 +177,7 @@ module.exports = {
             pItemMap = req.body.itemMap,
             pTag = req.body.tag;
 
-        projectsModel.findById(pProjectName, function (err, project) {
+        projectsModel.find({uid: pProjectName}, function (err, project) {
             if (err) {
                 next(err);
                 return;
@@ -198,7 +198,7 @@ module.exports = {
                     data : items[itemKey]
                 });
             }
-            translatesModel.find({ _id: regEx }, function(err, curTranslates){
+            translatesModel.find({ uid: regEx }, function(err, curTranslates){
                 if (err){
                     next(err);
                     return;
@@ -212,7 +212,7 @@ module.exports = {
                         return;
                     }
 
-                    projectsModel.findByIdAndUpdate(project._id,{
+                    projectsModel.findOneAndUpdate({uid: project.uid}, {
                         updateDate: new Date().getTime()
                     }, function(err, project){
                         if (err) {
@@ -229,7 +229,7 @@ module.exports = {
     },
 
     deleteByKeys: function(req, res, next) {
-        looger.debug('translateList deleteByKeys');
+        logger.debug('translateList deleteByKeys');
 
         if (!req.body || !req.body.projectName || !req.body.keys) {
             res.send({'code' : 'nok', 'error' : 'wrong parameter'});
@@ -239,7 +239,7 @@ module.exports = {
         if (typeof req.body.keys === 'string') {
             req.body.keys = JSON.parse(req.body.keys);
         }
-        projectsModel.findById(req.body.projectName, function (err, project) {
+        projectsModel.find({uid: req.body.projectName}, function (err, project) {
             if (err) {
                 next(err);
                 return;
@@ -252,7 +252,7 @@ module.exports = {
             req.body.keys.forEach((key) => {
                 bulkOperations.push({
                     deleteOne: {
-                        filter: { _id: regEx, strid: key },
+                        filter: { uid: regEx, strid: key },
                     }
                 });
             });
@@ -263,7 +263,7 @@ module.exports = {
                     return;
                 }
 
-                projectsModel.findByIdAndUpdate(project._id,{
+                projectsModel.findOneAndUpdate({uid: project.uid}, {
                     updateDate: new Date().getTime()
                 }, function(err, project){
                     if (err) {

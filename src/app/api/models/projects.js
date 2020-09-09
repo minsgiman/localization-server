@@ -3,6 +3,11 @@ const dbSchema = database.getSchema();
 const dbModel = database.getModel();
 
 const projectSchema = new dbSchema({
+    uid: {
+        type: String, //"b2b_server"
+        trim: true,
+        required: true,
+    },
     name: {
         type: String, //"b2b_server"
         trim: true,

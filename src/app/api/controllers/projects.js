@@ -1,12 +1,12 @@
 const projectsModel = require('../models/projects');
 const translatesModel = require('../models/translates');
-const looger = require('../../../service/logger');
+const logger = require('../../../service/logger');
 const constants = require('../../config');
 const util = require('../../../service/util');
 
 module.exports = {
     getProjects: function(req, res, next) {
-        looger.debug('projects getProjects');
+        logger.debug('projects getProjects');
         const resProjects = [];
 
         projectsModel.find({}, function(err, projects){
@@ -28,7 +28,7 @@ module.exports = {
     },
 
     create: function(req, res, next) {
-        looger.debug('projects create');
+        logger.debug('projects create');
 
         if (!req.body || !req.body.name || !req.body.languages) {
             res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
@@ -36,7 +36,7 @@ module.exports = {
         }
 
         projectsModel.create({
-            _id: req.body.name,
+            uid: req.body.name,
             name: req.body.name,
             languages: req.body.languages,
             uuid: util.makeUUID(),
@@ -52,14 +52,14 @@ module.exports = {
     },
 
     updateById: function(req, res, next) {
-        looger.debug('projects updateById');
+        logger.debug('projects updateById');
 
         if (!req.body || !req.body.languages) {
             res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
             return;
         }
 
-        projectsModel.findByIdAndUpdate(req.params.projectId,{
+        projectsModel.findOneAndUpdate({uid: req.params.projectId}, {
             languages: req.body.languages
         }, function(err, project){
             if (err) {
@@ -73,7 +73,7 @@ module.exports = {
     },
 
     deleteById: function(req, res, next) {
-        looger.debug('projects deleteById');
+        logger.debug('projects deleteById');
 
         if (!req.body || !req.body.uuid) {
             res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
@@ -82,11 +82,11 @@ module.exports = {
 
         const regPattern = `^${req.body.uuid}(.)+`;
         const regEx = new RegExp(regPattern);
-        translatesModel.deleteMany({ _id: regEx }, function (err) {
+        translatesModel.deleteMany({ uid: regEx }, function (err) {
             if (err) {
                 next(err);
             } else {
-                projectsModel.findByIdAndRemove(req.params.projectId, function (err, project) {
+                projectsModel.findOneAndRemove({uid: req.params.projectId}, function (err, project) {
                     if (err) {
                         next(err);
                     } else {
@@ -98,7 +98,7 @@ module.exports = {
     },
 
     getLogsById: function(req, res, next) {
-        looger.debug('projects getLogs');
+        logger.debug('projects getLogs');
 
         if (req.params.projectId) {
             res.send({'code' : 'ok', 'result': logger.getProjectLog(req.params.projectId)});
@@ -108,7 +108,7 @@ module.exports = {
     },
 
     deleteTranslatesById: function(req, res, next) {
-        looger.debug('projects deleteTranslates');
+        logger.debug('projects deleteTranslates');
 
         if (!req.body || !req.body.uuid) {
             res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
@@ -117,7 +117,7 @@ module.exports = {
 
         const regPattern = `^${req.body.uuid}(.)+`;
         const regEx = new RegExp(regPattern);
-        translatesModel.deleteMany({ _id: regEx }, function (err) {
+        translatesModel.deleteMany({ uid: regEx }, function (err) {
             if (err) {
                 next(err);
             } else {
@@ -126,7 +126,7 @@ module.exports = {
                     request : req,
                     projectId : req.params.projectId
                 });
-                projectsModel.findByIdAndUpdate(req.params.projectId,{
+                projectsModel.findOneAndUpdate({uid: req.params.projectId},{
                     updateDate: new Date().getTime()
                 }, function(err, project){
                     if (err) {

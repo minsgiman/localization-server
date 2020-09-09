@@ -3,6 +3,11 @@ const dbSchema = database.getSchema();
 const dbModel = database.getModel();
 
 const translateSchema = new dbSchema({
+    uid: {
+        type: String, //"dgb050dh_00001"
+        trim: true,
+        required: true,
+    },
     strid: {
         type: String, //"TOAST_BIZ_GO"
         trim: true,
