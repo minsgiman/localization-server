@@ -32,7 +32,7 @@ const util = {
         if (!keyList || !keyList.length) {
             return '00001';
         }
-        let i, zeroLen, tempStr = '', strKey, key = keyList[keyList.length - 1]._id;
+        let i, zeroLen, tempStr = '', strKey, key = keyList[keyList.length - 1].uid;
 
         if (!key) {
             return null;

@@ -80,7 +80,7 @@ class logger {
 
     recordProjectLog (logData) {
         const date = new Date();
-        const ipAddr = '<span style=\"color:darkred\">' + util.getClientIp(logData.request) + '</span>';
+        const ipAddr = util.getClientIp(logData.request);
         let log = '', updateValue = '';
 
         if (!this._projectLogMap[logData.projectId]) {
@@ -88,9 +88,9 @@ class logger {
         }
 
         if (logData.updateValue && logData.updateValue.length > 20) {
-            updateValue = '<span style=\"color:blue\">' + (logData.updateValue.substr(0, 20) + '...') + '</span>';
+            updateValue = (logData.updateValue.substr(0, 20) + '...');
         } else {
-            updateValue = '<span style=\"color:blue\">' + logData.updateValue + '</span>';
+            updateValue = logData.updateValue;
         }
 
         log = '[' + date.toLocaleString() + '] ';

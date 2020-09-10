@@ -40,7 +40,7 @@ module.exports = {
                 uuid: util.makeUUID(),
                 baseLang: constants.BASE_LANGUAGE,
                 updateDate: 0
-            }).exec();
+            });
             return res.send({code: 'ok'});
         } catch (err) {
             return next(err);

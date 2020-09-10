@@ -6,6 +6,7 @@ const config = require('../../config');
 const fs = require('fs');
 const xlsx = require('xlsx');
 const native2ascii = require('node-native2ascii');
+const formidable = require('formidable');
 
 function findKeyByStrId (strid, translates) {
     if (!translates || !translates.length) {
@@ -98,7 +99,7 @@ module.exports = {
                 dataObj[language] = req.body[language] ? req.body[language] : '';
             });
 
-            await translatesModel.create(dataObj).exec();
+            const translate = await translatesModel.create(dataObj);
             logger.recordProjectLog({
                 type : 'create',
                 request : req,
@@ -106,7 +107,7 @@ module.exports = {
                 updateValue : req.body.base
             });
             await projectsModel.findOneAndUpdate({ uid: req.body.project }, { updateDate: new Date().getTime() }).exec();
-            return res.send({ code: 'ok' });
+            return res.send({ code: 'ok', data: translate });
         } catch (err) {
             return next(err);
         }
@@ -176,7 +177,7 @@ module.exports = {
         }
 
         try {
-            const project = await projectsModel.find({ uid: req.query.projectName }).exec();
+            const project = await projectsModel.findOne({ uid: req.query.projectName }).exec();
             const regPattern = `^${project.uuid}(.)+`;
             const regEx = new RegExp(regPattern);
             const translates = await translatesModel.find({ uid: regEx }).exec();
@@ -293,7 +294,7 @@ module.exports = {
                 const sheet_name_list = excel.SheetNames;
                 const xlDatas = xlsx.utils.sheet_to_json(excel.Sheets[sheet_name_list[0]]);
 
-                const project = await projectsModel.find({ uid: projectName }).exec();
+                const project = await projectsModel.findOne({ uid: projectName }).exec();
                 const regPattern = `^${project.uuid}(.)+`;
                 const regEx = new RegExp(regPattern);
                 const baseLang = project.baseLang ? project.baseLang : config.BASE_LANGUAGE;
@@ -301,7 +302,7 @@ module.exports = {
                 const curTranslates = await translatesModel.find({ uid: regEx }).exec();
                 await translatesModel.bulkWrite(buildBulkUpsertOperations({
                     xlDatas, curTranslates, baseLang, pUuid: project.uuid
-                })).exec();
+                }));
 
                 logger.recordProjectLog({
                     type : 'upsertlist',

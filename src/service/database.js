@@ -14,7 +14,7 @@ class database {
         mongoose.connection.on('connected', () => {
             logger.debug('Mongoose connection open');
         });
-        mongoose.connect(this._mongoDbUrl, {useNewUrlParser: true, useUnifiedTopology: true});
+        mongoose.connect(this._mongoDbUrl, {useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false});
         mongoose.Promise = global.Promise;
     }
 

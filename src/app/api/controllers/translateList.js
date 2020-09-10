@@ -155,7 +155,7 @@ module.exports = {
             pItemMap = req.body.itemMap, pTag = req.body.tag;
 
         try {
-            const project = await projectsModel.find({uid: pProjectName}).exec();
+            const project = await projectsModel.findOne({uid: pProjectName}).exec();
             if (!project || !project.uuid) {
                 return res.send({'code' : 'nok', 'error' : 'no project exist'});
             }
@@ -173,7 +173,7 @@ module.exports = {
             }
             await translatesModel.bulkWrite(buildBulkUpsertOperations({
                 curTranslates, upsertStrings, project, pLocale, pTag
-            })).exec();
+            }));
             await projectsModel.findOneAndUpdate({ uid: project.uid }, { updateDate: new Date().getTime() }).exec();
             return res.send({ code: 'ok' });
         } catch (err) {
@@ -192,7 +192,7 @@ module.exports = {
         }
 
         try {
-            const project = await projectsModel.find({uid: req.body.projectName}).exec();
+            const project = await projectsModel.findOne({uid: req.body.projectName}).exec();
             const bulkOperations = [];
             const regPattern = `^${project.uuid}(.)+`;
             const regEx = new RegExp(regPattern);
@@ -204,7 +204,7 @@ module.exports = {
                     }
                 });
             });
-            await translatesModel.bulkWrite(bulkOperations).exec();
+            await translatesModel.bulkWrite(bulkOperations);
             await projectsModel.findOneAndUpdate({ uid: project.uid }, { updateDate: new Date().getTime() });
             return res.send({ code: 'ok' });
         } catch (err) {
