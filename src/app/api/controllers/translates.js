@@ -8,8 +8,8 @@ const xlsx = require('xlsx');
 const native2ascii = require('node-native2ascii');
 const formidable = require('formidable');
 
-const UPLOAD_PATH = './../files/upload/';
-const DOWNLOAD_PATH = './../files/download/';
+const UPLOAD_PATH = './../files/upload/'; // files/upload/
+const DOWNLOAD_PATH = './../files/download/'; // files/download/
 
 function findKeyByStrId (strid, translates) {
     if (!translates || !translates.length) {
@@ -346,16 +346,17 @@ module.exports = {
             const sendTranslates = [];
 
             translates.forEach((translate) => {
+                const sendTranslate = JSON.parse(JSON.stringify(translate));
                 projects.some((project) => {
-                    if (translate.uid.indexOf(project.uuid) !== -1) {
-                        translate.projectName = project.name;
-                        translate.projectUuid = project.uuid;
-                        translate.projectLanguages = projects.languages;
+                    if (sendTranslate.uid.indexOf(project.uuid) !== -1) {
+                        sendTranslate.projectName = project.name;
+                        sendTranslate.projectUuid = project.uuid;
+                        sendTranslate.projectLanguages = projects.languages;
                         return true;
                     }
                     return false;
                 });
-                sendTranslates.push(translate);
+                sendTranslates.push(sendTranslate);
             });
             return res.send({ code: 'ok', result: sendTranslates });
         } catch (err) {
