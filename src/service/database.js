@@ -5,6 +5,7 @@ const logger = require('./logger');
 class database {
     constructor() {
         this._mongoDbUrl = 'mongodb+srv://mskang:2306@cluster0.awaqg.mongodb.net/node_rest_api?retryWrites=true&w=majority';
+        //'mongodb://127.0.0.1:5050/node_rest_api'
     }
 
     mongooseInit() {
