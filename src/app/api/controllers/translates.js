@@ -8,6 +8,9 @@ const xlsx = require('xlsx');
 const native2ascii = require('node-native2ascii');
 const formidable = require('formidable');
 
+const UPLOAD_PATH = './../files/upload/';
+const DOWNLOAD_PATH = './../files/download/';
+
 function findKeyByStrId (strid, translates) {
     if (!translates || !translates.length) {
         return null;
@@ -51,15 +54,8 @@ function buildBulkUpsertOperations(params) {
                         update: dataObj
                     }
                 });
-            } else {
-                dataObj.uid = key;
-                bulkOperations.push({
-                    insertOne: {
-                        document: dataObj
-                    }
-                });
+                return;
             }
-            return;
         }
 
         dataObj.uid = key;
@@ -183,7 +179,8 @@ module.exports = {
             const translates = await translatesModel.find({ uid: regEx }).exec();
 
             if (req.query.type === 'json') {
-                const writeFile = fs.createWriteStream('./locale_' + req.query.lang + '.json');
+                const fileName = 'locale_' + req.query.lang + '.json';
+                const writeFile = fs.createWriteStream(DOWNLOAD_PATH + fileName);
                 const dataJSON = {};
 
                 translates.forEach((translate) => {
@@ -191,16 +188,17 @@ module.exports = {
                 });
                 writeFile.write(JSON.stringify(dataJSON, null, 2), function () {
                     res.writeHead(200, {
-                        "Content-Disposition": "attachment;filename=" + 'locale_' + req.query.lang + '.json'
+                        "Content-Disposition": "attachment;filename=" + fileName
                     });
-                    const readStream = fs.createReadStream('./locale_' + req.query.lang + '.json');
+                    const readStream = fs.createReadStream(DOWNLOAD_PATH + fileName);
                     readStream.pipe(res);
                 });
                 return;
             }
 
             if (req.query.type === 'xml') {
-                const writeFile = fs.createWriteStream('./locale_' + req.query.lang + '.xml');
+                const fileName = 'locale_' + req.query.lang + '.xml';
+                const writeFile = fs.createWriteStream(DOWNLOAD_PATH + fileName);
                 let text = '<resources>\n';
 
                 translates.forEach((translate) => {
@@ -213,9 +211,9 @@ module.exports = {
 
                 writeFile.write(text, function () {
                     res.writeHead(200, {
-                        "Content-Disposition": "attachment;filename=" + 'locale_' + req.query.lang + '.xml'
+                        "Content-Disposition": "attachment;filename=" + fileName
                     });
-                    const readStream = fs.createReadStream('./locale_' + req.query.lang + '.xml');
+                    const readStream = fs.createReadStream(DOWNLOAD_PATH + fileName);
                     readStream.pipe(res);
                 });
                 return;
@@ -231,6 +229,7 @@ module.exports = {
                 }
 
                 translates.forEach((translate) => {
+                    strData = {};
                     languages.forEach((lang) => {
                         strData[lang] = translate[lang];
                     });
@@ -243,17 +242,18 @@ module.exports = {
                     SheetNames:["Sheet1"],
                     Sheets:{ Sheet1: xlsx.utils.json_to_sheet(strDatas) }
                 };
-                xlsx.writeFile(workbook, 'locale.xlsx');
+                xlsx.writeFile(workbook, DOWNLOAD_PATH + 'locale.xlsx');
                 res.writeHead(200, {
                     "Content-Disposition": "attachment;filename=" + 'locale.xlsx'
                 });
-                const readStream = fs.createReadStream('locale.xlsx');
+                const readStream = fs.createReadStream(DOWNLOAD_PATH + 'locale.xlsx');
                 readStream.pipe(res);
                 return;
             }
 
             if (req.query.type === 'ascii') {
-                const writeFile = fs.createWriteStream('./Messages_' + req.query.lang + '.properties');
+                const fileName = 'Messages_' + req.query.lang + '.properties';
+                const writeFile = fs.createWriteStream(DOWNLOAD_PATH + fileName);
                 let text = '';
 
                 translates.forEach((translate) => {
@@ -264,9 +264,9 @@ module.exports = {
                 });
                 writeFile.write(text, function () {
                     res.writeHead(200, {
-                        "Content-Disposition": "attachment;filename=" + 'Messages_' + req.query.lang + '.properties'
+                        "Content-Disposition": "attachment;filename=" + fileName
                     });
-                    const readStream = fs.createReadStream('./Messages_' + req.query.lang + '.properties');
+                    const readStream = fs.createReadStream(DOWNLOAD_PATH + fileName);
                     readStream.pipe(res);
                 });
                 return;
@@ -285,12 +285,12 @@ module.exports = {
         form.parse(req);
 
         form.on('fileBegin', function (name, file) {
-            file.path = __dirname + '/' + file.name;
+            file.path = UPLOAD_PATH + file.name;
         });
 
         form.on('file', async(projectName, file) => {
             try {
-                const excel = xlsx.readFile(file.name);
+                const excel = xlsx.readFile(UPLOAD_PATH + file.name);
                 const sheet_name_list = excel.SheetNames;
                 const xlDatas = xlsx.utils.sheet_to_json(excel.Sheets[sheet_name_list[0]]);
 
@@ -328,7 +328,7 @@ module.exports = {
         res.writeHead(200, {
             "Content-Disposition": "attachment;filename=" + 'sample.xlsx'
         });
-        const readStream = fs.createReadStream('./sample.xlsx');
+        const readStream = fs.createReadStream(DOWNLOAD_PATH + 'sample.xlsx');
         readStream.pipe(res);
     },
 

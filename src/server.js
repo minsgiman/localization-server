@@ -5,6 +5,7 @@ const database = require('./service/database');
 const projects = require('./routes/projects');
 const translateList = require('./routes/translateList');
 const translates = require('./routes/translates');
+const path = require('path');
 
 const app = express();
 
@@ -16,7 +17,10 @@ if (process) {
 }
 database.mongooseInit();
 
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: false}));
+app.use(express.static(path.join(__dirname, '../public')));
 
 app.all('/*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
