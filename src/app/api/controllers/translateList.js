@@ -79,7 +79,7 @@ module.exports = {
 
         if (req.query.projectName) {
             try {
-                const project = await projectsModel.find({uid: req.query.projectName}).exec();
+                const project = await projectsModel.findOne({uid: req.query.projectName}).exec();
                 const regPattern = `^${project.uuid}(.)+`;
                 const regEx = new RegExp(regPattern);
                 const updateDateParam = req.query.updateDate ? parseInt(req.query.updateDate, 10) : -1;

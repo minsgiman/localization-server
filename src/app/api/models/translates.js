@@ -16,7 +16,7 @@ const translateSchema = new dbSchema({
     base: {
         type: String, //"토스트캠 Biz 바로가기"
         trim: true,
-        required: true,
+        required: false,
     },
     tag: {
         type: String, //"Localizable"
