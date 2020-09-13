@@ -6,8 +6,6 @@ const util = require('../../../service/util');
 
 module.exports = {
     getProjects: async(req, res, next) => {
-        logger.debug('projects getProjects');
-
         try {
             const resProjects = [];
             const projects = await projectsModel.find({}).exec();
@@ -26,8 +24,6 @@ module.exports = {
     },
 
     create: async(req, res, next) => {
-        logger.debug('projects create');
-
         if (!req.body || !req.body.name || !req.body.languages) {
             return res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
         }
@@ -48,8 +44,6 @@ module.exports = {
     },
 
     updateById: async(req, res, next) => {
-        logger.debug('projects updateById');
-
         if (!req.body || !req.body.languages) {
             return res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
         }
@@ -65,8 +59,6 @@ module.exports = {
     },
 
     deleteById: async(req, res, next) => {
-        logger.debug('projects deleteById');
-
         if (!req.body || !req.body.uuid) {
             return res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
         }
@@ -84,8 +76,6 @@ module.exports = {
     },
 
     getLogsById: function(req, res, next) {
-        logger.debug('projects getLogs');
-
         if (req.params.projectId) {
             res.send({'code' : 'ok', 'result': logger.getProjectLog(req.params.projectId)});
         } else {
@@ -94,8 +84,6 @@ module.exports = {
     },
 
     deleteTranslatesById: async(req, res, next) => {
-        logger.debug('projects deleteTranslates');
-
         if (!req.body || !req.body.uuid) {
             return res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
         }

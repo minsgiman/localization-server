@@ -71,8 +71,6 @@ function buildBulkUpsertOperations(paramObj) {
 
 module.exports = {
     getByProject: async(req, res, next) => {
-        logger.debug('translateList getByProject');
-
         if (!req.query || !(req.query.projectUUID || req.query.projectName)) {
             return res.send({ 'code' : 'nok' });
         }
@@ -145,8 +143,6 @@ module.exports = {
     },
 
     createByMap: async(req, res, next) => {
-        logger.debug('translateList createByMap');
-
         if (!req.body || !req.body.projectName || !req.body.locale || !req.body.itemMap) {
             return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
         }
@@ -182,8 +178,6 @@ module.exports = {
     },
 
     deleteByKeys: async(req, res, next) => {
-        logger.debug('translateList deleteByKeys');
-
         if (!req.body || !req.body.projectName || !req.body.keys) {
             return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
         }

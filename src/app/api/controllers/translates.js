@@ -73,8 +73,6 @@ function buildBulkUpsertOperations(params) {
 
 module.exports = {
     create: async(req, res, next) => {
-        logger.debug('translates create');
-
         if (!req.body || !req.body.base || !req.body.project || !req.body.uuid) {
             return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
         }
@@ -110,8 +108,6 @@ module.exports = {
     },
 
     updateById: async(req, res, next) => {
-        logger.debug('translates updateById');
-
         if (!req.body || !req.body.base || !req.params.translateId) {
             return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
         }
@@ -141,8 +137,6 @@ module.exports = {
     },
 
     deleteById: async(req, res, next) => {
-        logger.debug('translates deleteById');
-
         if (!req.params.translateId) {
             return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
         }
@@ -166,8 +160,6 @@ module.exports = {
     },
 
     getListByFileType: async(req, res, next) => {
-        logger.debug('translates getListByFileType');
-
         if (!req.query || !req.query.projectName || !req.query.type) {
             return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
         }
@@ -279,8 +271,6 @@ module.exports = {
     },
 
     createListByExcel: function (req, res, next) {
-        logger.debug('translates createListByExcel');
-
         const form = new formidable.IncomingForm();
         form.parse(req);
 
@@ -323,8 +313,6 @@ module.exports = {
     },
 
     getSampleFile: function(req, res, next) {
-        logger.debug('translates getSampleFile');
-
         res.writeHead(200, {
             "Content-Disposition": "attachment;filename=" + 'sample.xlsx'
         });
@@ -333,8 +321,6 @@ module.exports = {
     },
 
     getListByKeyword: async(req, res, next) => {
-        logger.debug('translates getListByKeyword');
-
         if (!req.query || !req.query.search) {
             return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
         }
