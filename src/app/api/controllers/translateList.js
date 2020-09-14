@@ -86,7 +86,7 @@ module.exports = {
                     return res.send({'code' : 'nok', 'msg' : 'notting updated'});
                 }
 
-                const translates = await translatesModel.find({ uid: regEx }).exec();
+                const translates = await translatesModel.find({ uid: regEx }).sort({ uid: 1 }).exec();
                 let map, tag, tags = {'': true}, languages, translate,
                     dataJSON = {code: 'ok', updateDate: project.updateDate, tags: []};
 
@@ -159,7 +159,7 @@ module.exports = {
             let itemKey, upsertStrings = [], items = (typeof pItemMap === 'string' ? JSON.parse(pItemMap) : pItemMap);
             const regPattern = `^${project.uuid}(.)+`;
             const regEx = new RegExp(regPattern);
-            const curTranslates = await translatesModel.find({ uid: regEx }).exec();
+            const curTranslates = await translatesModel.find({ uid: regEx }).sort({ uid: 1 }).exec();
 
             for (itemKey in items) {
                 upsertStrings.push({

@@ -49,4 +49,4 @@ app.use(function(err, req, res, next) { // handle errors
     }
 });
 
-app.listen(10001, function(){ console.log('Node server listening on port 10001');});
+app.listen(10000, function(){ console.log('Node server listening on port 10000');});

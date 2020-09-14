@@ -80,7 +80,7 @@ module.exports = {
         try {
             const regPattern = `^${req.body.uuid}(.)+`;
             const regEx = new RegExp(regPattern);
-            const curTranslates = await translatesModel.find({ uid: regEx }).exec();
+            const curTranslates = await translatesModel.find({ uid: regEx }).sort({ uid: 1 }).exec();
             const key = req.body.uuid + '_' + util.getEmptyKeyNumberStr(curTranslates);
             const dataObj = {
                 uid : key,
@@ -168,7 +168,7 @@ module.exports = {
             const project = await projectsModel.findOne({ uid: req.query.projectName }).exec();
             const regPattern = `^${project.uuid}(.)+`;
             const regEx = new RegExp(regPattern);
-            const translates = await translatesModel.find({ uid: regEx }).exec();
+            const translates = await translatesModel.find({ uid: regEx }).sort({ uid: 1 }).exec();
 
             if (req.query.type === 'json') {
                 const fileName = 'locale_' + req.query.lang + '.json';
@@ -289,7 +289,7 @@ module.exports = {
                 const regEx = new RegExp(regPattern);
                 const baseLang = project.baseLang ? project.baseLang : config.BASE_LANGUAGE;
 
-                const curTranslates = await translatesModel.find({ uid: regEx }).exec();
+                const curTranslates = await translatesModel.find({ uid: regEx }).sort({ uid: 1 }).exec();
                 await translatesModel.bulkWrite(buildBulkUpsertOperations({
                     xlDatas, curTranslates, baseLang, pUuid: project.uuid
                 }));
