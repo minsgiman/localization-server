@@ -1,24 +1,23 @@
-const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const database = require('../../../service/database');
+const dbSchema = database.getSchema();
+const dbModel = database.getModel();
+
 const saltRounds = 10;
 
-//Define a schema
-const Schema = mongoose.Schema;
-
-const UserSchema = new Schema({
-    name: {
+const UserSchema = new dbSchema({
+    id: {
         type: String,
         trim: true,
         required: true,
     },
-    email: {
+    password: {
         type: String,
         trim: true,
         required: true
     },
-    password: {
-        type: String,
-        trim: true,
+    admin: {
+        type: Boolean,
         required: true
     }
 });
@@ -29,4 +28,4 @@ UserSchema.pre('save', function(next){
     next();
 });
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = dbModel('User', UserSchema);

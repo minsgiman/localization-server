@@ -3,26 +3,50 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 module.exports = {
-    create: function(req, res, next) {
-        userModel.create({ name: req.body.name, email: req.body.email, password: req.body.password }, function (err, result) {
-            if (err)
-                next(err);
-            else
-                res.json({status: "success", message: "User added successfully!!!", data: null});
+    me: async(req, res, next) => {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader ? authHeader.split(" ")[1] : null;
+
+        if (!token) {
+            return res.send({'code' : 'nok', 'error': 'need login'});
+        }
+        jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, user) {
+            if (err) {
+                return res.send({'code' : 'nok', 'error': 'not valid'});
+            }
+            res.send({'code' : 'ok', 'user' : user});
         });
     },
-    authenticate: function(req, res, next) {
-        userModel.findOne({email:req.body.email}, function(err, userInfo){
-            if (err) {
-                next(err);
-            } else {
-                if(bcrypt.compareSync(req.body.password, userInfo.password)) {
-                    const token = jwt.sign({id: userInfo._id}, req.app.get('secretKey'), { expiresIn: '1h' });
-                    res.json({status:"success", message: "user found!!!", data:{user: userInfo, token:token}});
-                }else{
-                    res.json({status:"error", message: "Invalid email/password!!!", data:null});
-                }
+    create: async(req, res, next) => {
+        if (!req.body || !req.body.id || !req.body.password) {
+            return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
+        }
+
+        try {
+            await userModel.create({ id: req.body.id, password: req.body.password, admin: !!req.body.admin });
+            return res.send({ code: 'ok' });
+        } catch(err) {
+            return next(err);
+        }
+    },
+    authenticate: async(req, res, next) => {
+        if (!req.body || !req.body.id || !req.body.password) {
+            return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
+        }
+
+        try {
+            const user = await userModel.findOne({id: req.body.id}).exec();
+            if (user && bcrypt.compareSync(req.body.password, user.password)) {
+                const token = jwt.sign({
+                    id: user.id,
+                    password: user.password,
+                    admin: user.admin
+                }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15s' });
+                return res.send({ code: 'ok', user: {id: user.id, admin: user.admin}, token: token });
             }
-        });
+            return res.send({ code: 'nok', message: 'Invalid id or password' });
+        } catch(err) {
+            return next(err);
+        }
     }
 }
