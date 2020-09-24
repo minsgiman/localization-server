@@ -8,8 +8,8 @@ const xlsx = require('xlsx');
 const native2ascii = require('node-native2ascii');
 const formidable = require('formidable');
 
-const UPLOAD_PATH = './../files/upload/'; // files/upload/
-const DOWNLOAD_PATH = './../files/download/'; // files/download/
+const UPLOAD_PATH = process.env.UPLOAD_PATH;
+const DOWNLOAD_PATH = process.env.DOWNLOAD_PATH;
 
 function findKeyByStrId (strid, translates) {
     if (!translates || !translates.length) {

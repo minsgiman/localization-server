@@ -41,7 +41,7 @@ module.exports = {
                     id: user.id,
                     password: user.password,
                     admin: user.admin
-                }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15s' });
+                }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
                 return res.send({ code: 'ok', user: {id: user.id, admin: user.admin}, token: token });
             }
             return res.send({ code: 'nok', message: 'Invalid id or password' });

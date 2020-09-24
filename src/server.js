@@ -70,4 +70,4 @@ app.use(function(err, req, res, next) { // handle errors
     }
 });
 
-app.listen(10000, function(){ console.log('Node server listening on port 10000');});
+app.listen(process.env.PORT, function(){ console.log(`Node server listening on port ${process.env.PORT}`);});
