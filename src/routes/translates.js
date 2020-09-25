@@ -6,7 +6,6 @@ router.post('/', translatesController.create);
 router.put('/:translateId', translatesController.updateById);
 router.delete('/:translateId', translatesController.deleteById);
 router.get('/file', translatesController.getListByFileType);
-router.post('/file', translatesController.createListByExcel);
 router.get('/sampleFile', translatesController.getSampleFile);
 router.get('/search', translatesController.getListByKeyword);
 
