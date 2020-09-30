@@ -9,23 +9,6 @@ const native2ascii = require('node-native2ascii');
 
 const DOWNLOAD_PATH = process.env.DOWNLOAD_PATH;
 
-function findKeyByStrId (strid, translates) {
-    if (!translates || !translates.length) {
-        return null;
-    }
-
-    let foundKey = null;
-    translates.some((translate) => {
-        if (translate.strid === strid) {
-            foundKey = translate.uid;
-            return true;
-        }
-        return false;
-    });
-
-    return foundKey;
-}
-
 module.exports = {
     create: async(req, res, next) => {
         if (!req.body || !req.body.base || !req.body.project || !req.body.uuid) {
@@ -50,7 +33,7 @@ module.exports = {
 
             const translate = await translatesModel.create(dataObj);
             logger.recordProjectLog({
-                type : 'create',
+                type : 'create_translate',
                 request : req,
                 projectId : req.body.project,
                 updateValue : req.body.base
@@ -80,7 +63,7 @@ module.exports = {
             await translatesModel.findOneAndUpdate({ uid: req.params.translateId }, dataObj).exec();
             await projectsModel.findOneAndUpdate({ uid: req.body.project },{ updateDate: new Date().getTime() }).exec();
             logger.recordProjectLog({
-                type : 'update',
+                type : 'update_translate',
                 request : req,
                 projectId : req.body.project,
                 updateValue : req.body.base
@@ -98,15 +81,13 @@ module.exports = {
 
         try {
             const translate = await translatesModel.findOneAndRemove({uid: req.params.translateId}).exec();
-            await projectsModel.findOneAndUpdate({ uid: req.body.project }, { updateDate: new Date().getTime() }).exec();
+            await projectsModel.findOneAndUpdate({ uid: req.query.project }, { updateDate: new Date().getTime() }).exec();
 
             logger.recordProjectLog({
-                type : 'delete',
+                type : 'delete_translate',
                 request : req,
-                projectId : req.body.project,
-                deleteKey : req.params.translateId,
-                deleteStrId : translate.strid,
-                deleteBase : translate.base
+                projectId : req.query.project,
+                updateValue : translate.strid
             });
             return res.send({'code' : 'ok'});
         } catch (err) {

@@ -37,6 +37,12 @@ module.exports = {
                 baseLang: constants.BASE_LANGUAGE,
                 updateDate: 0
             });
+            logger.recordProjectLog({
+                type : 'create_project',
+                request : req,
+                projectId : req.body.name,
+                updateValue : req.body.name
+            });
             return res.send({code: 'ok'});
         } catch (err) {
             return next(err);
@@ -52,6 +58,12 @@ module.exports = {
             await projectsModel.findOneAndUpdate({uid: req.params.projectId}, {
                 languages: req.body.languages
             }).exec();
+            logger.recordProjectLog({
+                type : 'update_project',
+                request : req,
+                projectId : req.params.projectId,
+                updateValue : req.body.languages
+            });
             return res.send({ code: 'ok' });
         } catch (err) {
             return next(err);
@@ -59,16 +71,22 @@ module.exports = {
     },
 
     deleteById: async(req, res, next) => {
-        if (!req.body || !req.body.uuid) {
+        if (!req.body || !req.query.uuid) {
             return res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
         }
 
         try {
-            const regPattern = `^${req.body.uuid}(.)+`;
+            const regPattern = `^${req.query.uuid}(.)+`;
             const regEx = new RegExp(regPattern);
 
             await translatesModel.deleteMany({ uid: regEx }).exec();
             await projectsModel.findOneAndRemove({ uid: req.params.projectId }).exec();
+            logger.recordProjectLog({
+                type : 'delete_project',
+                request : req,
+                projectId : req.params.projectId,
+                updateValue : req.params.projectId
+            });
             return res.send({'code' : 'ok'});
         } catch (err) {
             return next(err);
@@ -84,19 +102,20 @@ module.exports = {
     },
 
     deleteTranslatesById: async(req, res, next) => {
-        if (!req.body || !req.body.uuid) {
+        if (!req.body || !req.query.uuid) {
             return res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
         }
 
         try {
-            const regPattern = `^${req.body.uuid}(.)+`;
+            const regPattern = `^${req.query.uuid}(.)+`;
             const regEx = new RegExp(regPattern);
 
             await translatesModel.deleteMany({ uid: regEx }).exec();
             logger.recordProjectLog({
-                type : 'deleteall',
+                type : 'delete_project_translates',
                 request : req,
-                projectId : req.params.projectId
+                projectId : req.params.projectId,
+                updateValue : req.params.projectId
             });
             await projectsModel.findOneAndUpdate({uid: req.params.projectId},{
                 updateDate: new Date().getTime()

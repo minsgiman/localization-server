@@ -20,9 +20,24 @@ function findTagMap (map, lang, tag) {
     return null;
 }
 
-function buildBulkUpsertOperations(paramObj) {
-    const curTranslates = paramObj.curTranslates, upsertStrings = paramObj.upsertStrings,
-        project = paramObj.project, pLocale = paramObj.pLocale, pTag = paramObj.pTag;
+function findKeyByStrId (strid, translates) {
+    if (!translates || !translates.length) {
+        return null;
+    }
+
+    let foundKey = null;
+    translates.some((translate) => {
+        if (translate.strid === strid) {
+            foundKey = translate.uid;
+            return true;
+        }
+        return false;
+    });
+
+    return foundKey;
+}
+
+function buildBulkUpsertOperations({curTranslates, upsertStrings, project, pLocale, pTag}) {
     const translateMap = {}, bulkOperations = [];
     let curKeyNumber = util.getEmptyKeyNumberStr(curTranslates);
 
@@ -74,9 +89,7 @@ function buildBulkUpsertOperations(paramObj) {
     return bulkOperations;
 }
 
-function buildBulkUpsertOperationsByXlDatas(params) {
-    const xlDatas = params.xlDatas, curTranslates = params.curTranslates,
-        baseLang = params.baseLang, pUuid = params.pUuid;
+function buildBulkUpsertOperationsByXlDatas({xlDatas, curTranslates, baseLang, pUuid}) {
     const bulkOperations = [];
     let keyNumber = util.getEmptyKeyNumberStr(curTranslates),
         key = pUuid + '_' + keyNumber, foundKey;
@@ -219,6 +232,12 @@ module.exports = {
                 curTranslates, upsertStrings, project, pLocale, pTag
             }));
             await projectsModel.findOneAndUpdate({ uid: project.uid }, { updateDate: new Date().getTime() }).exec();
+            logger.recordProjectLog({
+                type : 'create_translates_by_map',
+                request : req,
+                projectId : project.uid,
+                updateValue : `upsert count - ${upsertStrings.length}`
+            });
             return res.send({ code: 'ok' });
         } catch (err) {
             return next(err);
@@ -248,6 +267,12 @@ module.exports = {
             });
             await translatesModel.bulkWrite(bulkOperations);
             await projectsModel.findOneAndUpdate({ uid: project.uid }, { updateDate: new Date().getTime() });
+            logger.recordProjectLog({
+                type : 'delete_translates_by_keys',
+                request : req,
+                projectId : project.uid,
+                updateValue : `delete count - ${bulkOperations.length}`
+            });
             return res.send({ code: 'ok' });
         } catch (err) {
             return next(err);
@@ -278,11 +303,10 @@ module.exports = {
                 }));
 
                 logger.recordProjectLog({
-                    type : 'upsertlist',
+                    type : 'upsertlist_by_excel',
                     request : req,
                     projectId : project.uid,
-                    updateValue : xlDatas[0] ? xlDatas[0][baseLang] : '',
-                    updateLength : xlDatas.length
+                    updateValue : `upsert count - ${xlDatas.length}`
                 });
                 await projectsModel.findOneAndUpdate({ uid: project.uid }, { updateDate: new Date().getTime() }).exec();
                 return res.send({ code: 'ok' });

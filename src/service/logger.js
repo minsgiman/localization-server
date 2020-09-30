@@ -78,39 +78,27 @@ class logger {
         return this._projectLogMap[projectId] ? this._projectLogMap[projectId] : [];
     }
 
-    recordProjectLog (logData) {
+    recordProjectLog ({projectId, type, updateValue, request}) {
         const date = new Date();
-        const ipAddr = util.getClientIp(logData.request);
-        let log = '', updateValue = '';
+        const ipAddr = util.getClientIp(request);
+        const userId = request.user ? request.user.id : '';
+        let log, logUpdateValue;
 
-        if (!this._projectLogMap[logData.projectId]) {
-            this._projectLogMap[logData.projectId] = [];
+        if (!this._projectLogMap[projectId]) {
+            this._projectLogMap[projectId] = [];
         }
 
-        if (logData.updateValue && logData.updateValue.length > 20) {
-            updateValue = (logData.updateValue.substr(0, 20) + '...');
+        if (updateValue && updateValue.length > 25) {
+            logUpdateValue = (updateValue.substr(0, 25) + '...');
         } else {
-            updateValue = logData.updateValue;
+            logUpdateValue = updateValue;
         }
 
-        log = '[' + date.toLocaleString() + '] ';
-        log += (ipAddr + '에서(' + logData.projectId + ' 프로젝트) ');
+        log = `[${date.toLocaleString()}] user(${userId}) ipAddr(${ipAddr}), project(${projectId}), command(${type}), updateValue(${logUpdateValue})`;
 
-        if (logData.type === 'upsertlist') {
-            log += (logData.updateLength > 1 ? (updateValue + ' 외 ' + logData.updateLength + '개를 업로드하였습니다.') : (updateValue + ' 를 업로드하였습니다.'));
-        } else if (logData.type === 'delete') {
-            log += ('\"{key: ' + logData.deleteKey + ', strid: ' + logData.deleteStrId + ', base: ' + logData.deleteBase + '}\" 를 삭제하였습니다.');
-        } else if (logData.type === 'update') {
-            log += (updateValue + ' 를 업데이트하였습니다.');
-        } else if (logData.type === 'create') {
-            log += (updateValue + ' 를 생성하였습니다.');
-        } else if (logData.type === 'deleteall') {
-            log += ('번역어 전체를 삭제하였습니다.');
-        }
-
-        this._projectLogMap[logData.projectId].push(log);
-        if (this._projectLogMap[logData.projectId].length > 30) {
-            this._projectLogMap[logData.projectId].shift();
+        this._projectLogMap[projectId].push(log);
+        if (this._projectLogMap[projectId].length > 30) {
+            this._projectLogMap[projectId].shift();
         }
         this.debug(log);
     }

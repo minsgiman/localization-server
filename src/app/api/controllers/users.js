@@ -14,7 +14,7 @@ module.exports = {
             if (err) {
                 return res.send({'code' : 'nok', 'error': 'not valid'});
             }
-            res.send({'code' : 'ok', 'user' : user});
+            res.send({'code' : 'ok', 'user' : {id: user.id, admin: user.admin}});
         });
     },
     create: async(req, res, next) => {
