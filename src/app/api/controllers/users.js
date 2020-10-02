@@ -23,7 +23,11 @@ module.exports = {
         }
 
         try {
-            await userModel.create({ id: req.body.id, password: req.body.password, admin: !!req.body.admin });
+            const user = await userModel.findOne({id: req.body.id});
+            if (user) {
+                return res.send({ code: 'nok', msg: 'duplicated user'});
+            }
+            await userModel.create({ id: req.body.id, password: req.body.password, admin: req.body.admin === 'admin' });
             return res.send({ code: 'ok' });
         } catch(err) {
             return next(err);
