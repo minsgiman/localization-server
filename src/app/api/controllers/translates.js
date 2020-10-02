@@ -231,7 +231,7 @@ module.exports = {
                     if (sendTranslate.uid.indexOf(project.uuid) !== -1) {
                         sendTranslate.projectName = project.name;
                         sendTranslate.projectUuid = project.uuid;
-                        sendTranslate.projectLanguages = projects.languages;
+                        sendTranslate.projectLanguages = project.languages;
                         return true;
                     }
                     return false;
