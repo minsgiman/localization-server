@@ -23,7 +23,8 @@ database.mongooseInit();
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({limit: 50000000, extended: false, parameterLimit:500000}));
+app.use(bodyParser.json({limit: 50000000}));
 app.use(express.static(path.join(__dirname, '../public')));
 
 app.use(helmet());
