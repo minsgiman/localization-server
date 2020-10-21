@@ -280,6 +280,11 @@ module.exports = {
     },
 
     createListByExcel: function (req, res, next) {
+        if (!req.params.projectId) {
+            return res.send({'code' : 'nok', 'error' : 'no projectName exist'});
+        }
+
+        const projectName = req.params.projectId;
         const form = new formidable.IncomingForm();
         form.parse(req);
 
@@ -287,7 +292,7 @@ module.exports = {
             file.path = UPLOAD_PATH + file.name;
         });
 
-        form.on('file', async(projectName, file) => {
+        form.on('file', async(name, file) => {
             try {
                 const excel = xlsx.readFile(UPLOAD_PATH + file.name);
                 const sheet_name_list = excel.SheetNames;
@@ -314,6 +319,8 @@ module.exports = {
                 return next(err);
             }
         });
+
+
         // form.on('progress', function (byteRead, byteExpected) {
         //     logger.debug(' Reading total ' + byteRead + '/' + byteExpected);
         // });
