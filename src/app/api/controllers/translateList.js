@@ -2,11 +2,6 @@ const translatesModel = require('../models/translates');
 const projectsModel = require('../models/projects');
 const logger = require('../../../service/logger');
 const util = require('../../../service/util');
-const config = require('../../config');
-const formidable = require('formidable');
-const xlsx = require('xlsx');
-
-const UPLOAD_PATH = process.env.UPLOAD_PATH;
 
 function findTagMap (map, lang, tag) {
     const tagValue = tag ? tag : '', len = map.length;
@@ -18,23 +13,6 @@ function findTagMap (map, lang, tag) {
         }
     }
     return null;
-}
-
-function findKeyByStrId (strid, translates) {
-    if (!translates || !translates.length) {
-        return null;
-    }
-
-    let foundKey = null;
-    translates.some((translate) => {
-        if (translate.strid === strid) {
-            foundKey = translate.uid;
-            return true;
-        }
-        return false;
-    });
-
-    return foundKey;
 }
 
 function buildBulkUpsertOperations({curTranslates, upsertStrings, project, pLocale, pTag}) {
@@ -84,47 +62,6 @@ function buildBulkUpsertOperations({curTranslates, upsertStrings, project, pLoca
             });
             curKeyNumber = util.getEmptyKeyNumberWithPrevNumber(curKeyNumber)
         }
-    });
-
-    return bulkOperations;
-}
-
-function buildBulkUpsertOperationsByXlDatas({xlDatas, curTranslates, baseLang, pUuid}) {
-    const bulkOperations = [];
-    let keyNumber = util.getEmptyKeyNumberStr(curTranslates),
-        key = pUuid + '_' + keyNumber, foundKey;
-
-    xlDatas.forEach((xlData) => {
-        const dataObj = {
-            strid: xlData.strid ? xlData.strid : key,
-            base: xlData[baseLang] ? xlData[baseLang] : '',
-            tag: xlData.tag ? xlData.tag : ''
-        };
-        config.SUPPORT_LANGUAGES.forEach((lang) => {
-            dataObj[lang] = xlData[lang] ? xlData[lang] : '';
-        });
-
-        if (xlData.strid) {
-            foundKey = findKeyByStrId(xlData.strid, curTranslates);
-            if (foundKey) {
-                bulkOperations.push({
-                    updateOne: {
-                        filter: { uid: foundKey },
-                        update: dataObj
-                    }
-                });
-                return;
-            }
-        }
-
-        dataObj.uid = key;
-        bulkOperations.push({
-            insertOne: {
-                document: dataObj
-            }
-        });
-        keyNumber = util.getEmptyKeyNumberWithPrevNumber(keyNumber);
-        key = pUuid + '_' + keyNumber;
     });
 
     return bulkOperations;
@@ -277,52 +214,5 @@ module.exports = {
         } catch (err) {
             return next(err);
         }
-    },
-
-    createListByExcel: function (req, res, next) {
-        if (!req.params.projectId) {
-            return res.send({'code' : 'nok', 'error' : 'no projectName exist'});
-        }
-
-        const projectName = req.params.projectId;
-        const form = new formidable.IncomingForm();
-        form.parse(req);
-
-        form.on('fileBegin', function (name, file) {
-            file.path = UPLOAD_PATH + file.name;
-        });
-
-        form.on('file', async(name, file) => {
-            try {
-                const excel = xlsx.readFile(UPLOAD_PATH + file.name);
-                const sheet_name_list = excel.SheetNames;
-                const xlDatas = xlsx.utils.sheet_to_json(excel.Sheets[sheet_name_list[0]]);
-                const project = await projectsModel.findOne({ uid: projectName }).exec();
-                const regPattern = `^${project.uuid}(.)+`;
-                const regEx = new RegExp(regPattern);
-                const baseLang = project.baseLang ? project.baseLang : config.BASE_LANGUAGE;
-
-                const curTranslates = await translatesModel.find({ uid: regEx }).sort({ uid: 1 }).exec();
-                await translatesModel.bulkWrite(buildBulkUpsertOperationsByXlDatas({
-                    xlDatas, curTranslates, baseLang, pUuid: project.uuid
-                }));
-
-                logger.recordProjectLog({
-                    type : 'upsertlist_by_excel',
-                    request : req,
-                    projectId : project.uid,
-                    updateValue : `upsert count - ${xlDatas.length}`
-                });
-                await projectsModel.findOneAndUpdate({ uid: project.uid }, { updateDate: new Date().getTime() }).exec();
-                return res.send({ code: 'ok' });
-            } catch (err) {
-                return next(err);
-            }
-        });
-
-
-        // form.on('progress', function (byteRead, byteExpected) {
-        //     logger.debug(' Reading total ' + byteRead + '/' + byteExpected);
-        // });
     }
 };

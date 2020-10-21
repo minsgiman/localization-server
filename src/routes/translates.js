@@ -8,5 +8,6 @@ router.delete('/:translateId', translatesController.deleteById);
 router.get('/file', translatesController.getListByFileType);
 router.get('/sampleFile', translatesController.getSampleFile);
 router.get('/search', translatesController.getListByKeyword);
+router.post('/file/:projectId', translatesController.createListByExcel);
 
 module.exports = router;
