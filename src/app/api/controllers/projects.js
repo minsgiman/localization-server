@@ -14,7 +14,8 @@ module.exports = {
                 resProjects.push({
                     name: project.name,
                     uuid: project.uuid,
-                    languages: project.languages
+                    languages: project.languages,
+                    baseLang: project.baseLang
                 });
             }
             return res.send({ list: resProjects });
@@ -24,7 +25,7 @@ module.exports = {
     },
 
     create: async(req, res, next) => {
-        if (!req.body || !req.body.name || !req.body.languages) {
+        if (!req.body || !req.body.name || !req.body.languages || !req.body.base) {
             return res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
         }
 
@@ -34,7 +35,7 @@ module.exports = {
                 name: req.body.name,
                 languages: req.body.languages,
                 uuid: util.makeUUID(),
-                baseLang: constants.BASE_LANGUAGE,
+                baseLang: req.body.base,
                 updateDate: 0
             });
             logger.recordProjectLog({
@@ -50,13 +51,14 @@ module.exports = {
     },
 
     updateById: async(req, res, next) => {
-        if (!req.body || !req.body.languages) {
+        if (!req.body || !req.body.languages || !req.body.base) {
             return res.send({'code' : 'nok', 'error' : 'body parameter is wrong'});
         }
 
         try {
             await projectsModel.findOneAndUpdate({uid: req.params.projectId}, {
-                languages: req.body.languages
+                languages: req.body.languages,
+                baseLang: req.body.base
             }).exec();
             logger.recordProjectLog({
                 type : 'update_project',

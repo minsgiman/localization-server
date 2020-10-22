@@ -1,6 +1,5 @@
 const constants = {
-    SUPPORT_LANGUAGES: ['ko', 'ja', 'en', 'es', 'de', 'zh'],
-    BASE_LANGUAGE: 'ko'
+    SUPPORT_LANGUAGES: ['ko', 'ja', 'en', 'es', 'de', 'zh']
 };
 
 module.exports = constants;

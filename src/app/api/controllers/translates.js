@@ -28,7 +28,7 @@ function findKeyByStrId (strid, translates) {
     return foundKey;
 }
 
-function buildBulkUpsertOperationsByXlDatas({xlDatas, curTranslates, baseLang, pUuid}) {
+function buildBulkUpsertOperationsByXlDatas({xlDatas, curTranslates, pUuid}) {
     const bulkOperations = [];
     let keyNumber = util.getEmptyKeyNumberStr(curTranslates),
         key = pUuid + '_' + keyNumber, foundKey;
@@ -36,7 +36,6 @@ function buildBulkUpsertOperationsByXlDatas({xlDatas, curTranslates, baseLang, p
     xlDatas.forEach((xlData) => {
         const dataObj = {
             strid: xlData.strid ? xlData.strid : key,
-            base: xlData[baseLang] ? xlData[baseLang] : '',
             tag: xlData.tag ? xlData.tag : ''
         };
         config.SUPPORT_LANGUAGES.forEach((lang) => {
@@ -71,7 +70,7 @@ function buildBulkUpsertOperationsByXlDatas({xlDatas, curTranslates, baseLang, p
 
 module.exports = {
     create: async(req, res, next) => {
-        if (!req.body || !req.body.base || !req.body.project || !req.body.uuid) {
+        if (!req.body || !req.body.project || !req.body.uuid) {
             return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
         }
 
@@ -83,12 +82,15 @@ module.exports = {
             const dataObj = {
                 uid : key,
                 strid : key,
-                base : req.body.base,
                 tag : req.body.tag ? req.body.tag : ''
             };
+            let updateValue = '';
 
             config.SUPPORT_LANGUAGES.forEach((language) => {
                 dataObj[language] = req.body[language] ? req.body[language] : '';
+                if (!updateValue) {
+                    updateValue = dataObj[language];
+                }
             });
 
             const translate = await translatesModel.create(dataObj);
@@ -96,7 +98,7 @@ module.exports = {
                 type : 'create_translate',
                 request : req,
                 projectId : req.body.project,
-                updateValue : req.body.base
+                updateValue
             });
             await projectsModel.findOneAndUpdate({ uid: req.body.project }, { updateDate: new Date().getTime() }).exec();
             return res.send({ code: 'ok', data: translate });
@@ -106,18 +108,22 @@ module.exports = {
     },
 
     updateById: async(req, res, next) => {
-        if (!req.body || !req.body.base || !req.params.translateId) {
+        if (!req.body || !req.params.translateId) {
             return res.send({'code' : 'nok', 'error' : 'wrong parameter'});
         }
 
         try {
             const dataObj = {
-                base : req.body.base,
                 strid : req.body.strid,
                 tag : req.body.tag
             };
+            let updateValue = '';
+
             config.SUPPORT_LANGUAGES.forEach((language) => {
                 dataObj[language] = req.body[language] ? req.body[language] : '';
+                if (!updateValue) {
+                    updateValue = dataObj[language];
+                }
             });
 
             await translatesModel.findOneAndUpdate({ uid: req.params.translateId }, dataObj).exec();
@@ -126,7 +132,7 @@ module.exports = {
                 type : 'update_translate',
                 request : req,
                 projectId : req.body.project,
-                updateValue : req.body.base
+                updateValue
             });
             return res.send({'code' : 'ok', 'data' : { id: req.params.translateId, locale: dataObj }});
         } catch (err) {
@@ -172,7 +178,7 @@ module.exports = {
                 const dataJSON = {};
 
                 translates.forEach((translate) => {
-                    dataJSON[translate.strid] = translate[req.query.lang] ? translate[req.query.lang] : translate.base;
+                    dataJSON[translate.strid] = translate[req.query.lang] ? translate[req.query.lang] : translate[project.baseLang];
                 });
                 writeFile.write(JSON.stringify(dataJSON, null, 2), function () {
                     res.writeHead(200, {
@@ -192,7 +198,7 @@ module.exports = {
                 translates.forEach((translate) => {
                     text += (translate[req.query.lang] ?
                             ('\t<string name=' + '\"' + translate.strid + '\">' + translate[req.query.lang] + '</string>' + '\n') :
-                            ('\t<string name=' + '\"' + translate.strid + '\">' + translate.base + '</string>' + '\n')
+                            ('\t<string name=' + '\"' + translate.strid + '\">' + translate[project.baseLang] + '</string>' + '\n')
                     );
                 });
                 text += '</resources>';
@@ -247,7 +253,7 @@ module.exports = {
                 translates.forEach((translate) => {
                     text += (translate[req.query.lang] ?
                             (translate.strid + '=' + native2ascii(translate[req.query.lang]) + '\n') :
-                            (translate.strid + '=' + native2ascii(translate.base) + '\n')
+                            (translate.strid + '=' + native2ascii(translate[project.baseLang]) + '\n')
                     );
                 });
                 writeFile.write(text, function () {
@@ -295,11 +301,10 @@ module.exports = {
                 const project = await projectsModel.findOne({ uid: projectName }).exec();
                 const regPattern = `^${project.uuid}(.)+`;
                 const regEx = new RegExp(regPattern);
-                const baseLang = project.baseLang ? project.baseLang : config.BASE_LANGUAGE;
 
                 const curTranslates = await translatesModel.find({ uid: regEx }).sort({ uid: 1 }).exec();
                 await translatesModel.bulkWrite(buildBulkUpsertOperationsByXlDatas({
-                    xlDatas, curTranslates, baseLang, pUuid: project.uuid
+                    xlDatas, curTranslates, pUuid: project.uuid
                 }));
 
                 logger.recordProjectLog({
@@ -327,7 +332,7 @@ module.exports = {
 
         try {
             const regEx = new RegExp(req.query.search, 'gi');
-            const translates = await translatesModel.find({ $or: [ {base: regEx}, {ko: regEx} ] }).exec();
+            const translates = await translatesModel.find({ $or: [ {ko: regEx}, {ja: regEx} ] }).exec();
             const projects = await projectsModel.find({}).exec();
             const sendTranslates = [];
 

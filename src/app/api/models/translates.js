@@ -12,10 +12,6 @@ const translateSchema = new dbSchema({
         type: String, //"TOAST_BIZ_GO"
         required: true,
     },
-    base: {
-        type: String, //"토스트캠 Biz 바로가기"
-        required: false,
-    },
     tag: {
         type: String, //"Localizable"
         required: false,

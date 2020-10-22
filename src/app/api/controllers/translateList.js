@@ -29,9 +29,6 @@ function buildBulkUpsertOperations({curTranslates, upsertStrings, project, pLoca
         if (translateMap[string.stringid]) {
             updateObj = {};
             updateObj[pLocale] = string.data;
-            if (pLocale === project.baseLang) {
-                updateObj.base = string.data;
-            }
             updateObj.tag = pTag ? pTag : '';
 
             bulkOperations.push({
@@ -43,7 +40,6 @@ function buildBulkUpsertOperations({curTranslates, upsertStrings, project, pLoca
         } else {
             insertObj = {
                 uid: project.uuid + '_' + curKeyNumber,
-                base: (pLocale === project.baseLang) ? string.data : '',
                 strid: string.stringid,
                 tag: pTag ? pTag : '',
                 ko : '',
